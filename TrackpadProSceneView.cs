@@ -171,8 +171,8 @@ public class TrackpadProSceneView : SceneView
             !(in2DMode && CurrentControls(controlRotation, out invertX, out invertY)))
             return;
 
-        float moveX = Event.current.delta.x * panSpeed;
-        float moveY = -Event.current.delta.y * panSpeed;
+        float moveX = mouseDelta.x * invertX * panSpeed;
+        float moveY = mouseDelta.y * invertY * panSpeed;
 
         pivot += CameraSpace.TransformVector(size * new Vector3(moveX, moveY, 0));
     }
@@ -222,46 +222,88 @@ public class TrackpadProSceneView : SceneView
     private bool settingsOpened = false;
     private void SettingsGUI()
     {
-        if (GUI.Button(new Rect(position.width - 40, 140, 30, 30), EditorGUIUtility.IconContent(!settingsOpened ? "d_Settings Icon" : "d_winbtn_win_close")))
+        if (GUI.Button(settingsOpened ? new Rect(position.width / 2 - 15, 10, 30, 30) : new Rect(position.width - 40, 140, 30, 30), EditorGUIUtility.IconContent(!settingsOpened ? "d_Settings Icon" : "d_winbtn_win_close")))
             settingsOpened = !settingsOpened;
 
         if (!settingsOpened)
             return;
 
-        Rect settingsPanel = new Rect(position.width - 310, 190, 300, 220);
-        GUI.Box(settingsPanel, "");
-        GUILayout.BeginArea(new Rect(settingsPanel.x + 10, settingsPanel.y + 10, settingsPanel.width - 20, settingsPanel.height - 20));
+        float settingsWidth = Mathf.Min(400, position.width - 100);
+        float settingsHeight = Mathf.Min(460, position.height - 60);
+        float settingsPadding = 20;
+        float settingsSpacing = 20;
+
+        Rect settingsPanel = new Rect(position.width / 2 - settingsWidth / 2, position.height / 2 - settingsHeight / 2, settingsWidth, settingsHeight);
+
+        GUI.Box(settingsPanel, ""); GUI.Box(settingsPanel, ""); GUI.Box(settingsPanel, "");
+
+        GUILayout.BeginArea(new Rect(settingsPanel.x + settingsPadding, settingsPanel.y + settingsPadding, settingsPanel.width - settingsPadding * 2, settingsPanel.height - settingsPadding * 2));
 
         GUILayout.BeginVertical();
 
         controlRotation = ControlGUISettings(controlRotation, "Rotate");
+        rotateSpeed = EditorGUILayout.FloatField("Rotate speed", rotateSpeed);
 
-        GUILayout.Space(10);
+        GUILayout.Space(settingsSpacing);
 
         controlPan = ControlGUISettings(controlPan, "Pan");
+        panSpeed = EditorGUILayout.FloatField("Pan speed", panSpeed);
 
-        GUILayout.Space(10);
+        GUILayout.Space(settingsSpacing);
 
         controlZoom = ControlGUISettings(controlZoom, "Zoom");
+        zoomRatio = EditorGUILayout.Slider("Zoom speed", zoomRatio, 0.1f, 1f);
+        zoomMin = EditorGUILayout.FloatField("Zoom min", zoomMin);
+        zoomMax = EditorGUILayout.FloatField("Zoom max", zoomMax);
+
+        GUILayout.Space(settingsSpacing);
+
+        pointerMultiplier = EditorGUILayout.FloatField("Cursor speed multiplier", pointerMultiplier);
 
         GUILayout.EndVertical();
+
         GUILayout.EndArea();
     }
 
 
     private int ControlGUISettings(int original, string label)
     {
-        int result = 0;
+        int result = original;
 
-        char[] characters = original.ToString().ToCharArray();
-        char[] bits = new char[characters.Length];
-        for (int i = 0; i < characters.Length; i++)
-            bits[characters.Length - 1 - i] = characters[i];
+        bool invertY = false; bool invertX = false; bool hasControl = false; bool hasShift = false; bool hasOption = false; bool hasCommand = false;
 
-        bool hasControl = original >= BN_CONTROL && bits[4] == '1';
-        bool hasShift = original >= BN_SHIFT && bits[3] == '1';
-        bool hasOption = original >= BN_OPTION && bits[2] == '1';
-        bool hasCommand = original >= BN_COMMAND && bits[1] == '1';
+        if (result >= MOD_INV_Y)
+        {
+            invertY = true;
+            result -= MOD_INV_Y;
+        }
+        if (result >= MOD_INV_X)
+        {
+            invertX = true;
+            result -= MOD_INV_X;
+        }
+        if (result >= BN_CONTROL)
+        {
+            hasControl = true;
+            result -= BN_CONTROL;
+        }
+        if (result >= BN_SHIFT)
+        {
+            hasShift = true;
+            result -= BN_SHIFT;
+        }
+        if (result >= BN_OPTION)
+        {
+            hasOption = true;
+            result -= BN_OPTION;
+        }
+        if (result >= BN_COMMAND)
+        {
+            hasCommand = true;
+            result -= BN_COMMAND;
+        }
+
+        int mouseAxis = result;
 
         List<string> combination = new List<string>();
         if (hasControl)
@@ -272,8 +314,7 @@ public class TrackpadProSceneView : SceneView
             combination.Add("Option");
         if (hasCommand)
             combination.Add("Command");
-        if (combination.Count == 0)
-            combination.Add("-");
+        combination.Add(mouseAxis == 0 ? "Cursor" : "Scroll");
 
         GUILayout.Label(label.ToUpper());
         GUILayout.Label("      " + string.Join(" + ", combination));
@@ -286,7 +327,24 @@ public class TrackpadProSceneView : SceneView
         hasCommand = ButtonCheckbox(hasCommand, "Command");
 
         GUILayout.EndHorizontal();
+        GUILayout.BeginHorizontal();
 
+        if (GUILayout.Button(mouseAxis == 0 ? "Cursor movement" : "Scroll movement"))
+            mouseAxis = mouseAxis == 0 ? 1 : 0;
+
+        if (GUILayout.Button(invertX ? "-X" : "+X"))
+            invertX = !invertX;
+        if (GUILayout.Button(invertY ? "-Y" : "+Y"))
+            invertY = !invertY;
+
+        GUILayout.EndHorizontal();
+
+        result = 0;
+
+        if (invertY)
+            result += MOD_INV_Y;
+        if (invertX)
+            result += MOD_INV_X;
         if (hasControl)
             result += BN_CONTROL;
         if (hasShift)
@@ -295,6 +353,7 @@ public class TrackpadProSceneView : SceneView
             result += BN_OPTION;
         if (hasCommand)
             result += BN_COMMAND;
+        result += mouseAxis;
 
         return result;
     }
