@@ -33,7 +33,7 @@ public class TrackpadProSceneView : SceneView
     // Camera parameters
 
     [SerializeField]
-    float rotateSpeed = 3f;
+    float rotateSpeed = 5f;
 
     [SerializeField]
     float panSpeed = 0.1f;
@@ -45,7 +45,7 @@ public class TrackpadProSceneView : SceneView
     float zoomMaxDelta = 10f;
 
     [SerializeField, Range(0.1f, 1f)]
-    float zoomRatio = 0.3f;
+    float zoomRatio = 0.5f;
 
     [SerializeField, Range(0.00001f, 0.1f)]
     float zoomMin = 0.01f;
