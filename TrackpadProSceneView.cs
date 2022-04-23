@@ -47,14 +47,26 @@ public class TrackpadProSceneView : SceneView
     [SerializeField]
     float zoomMaxDelta = 10f;
 
-    [SerializeField, Range(0.1f, 1f)]
+    [SerializeField]
     float zoomRatio = 0.5f;
 
-    [SerializeField, Range(0.00001f, 0.1f)]
+    [SerializeField]
     float zoomMin = 0.01f;
 
-    [SerializeField, Range(5000000f, 10000000000f)]
+    [SerializeField]
     float zoomMax = 1000000f;
+
+
+    // Private fields
+
+    [System.NonSerialized]
+    int currentControlCode = 0;
+    [System.NonSerialized]
+    Vector2 mouseDelta = Vector2.zero;
+    [System.NonSerialized]
+    GameObject cameraDummyObject = null;
+    [System.NonSerialized]
+    private bool settingsOpened = false;
 
 
     [MenuItem("Window/Scene View (TPP)")]
@@ -74,7 +86,6 @@ public class TrackpadProSceneView : SceneView
     }
 
 
-    int currentControlCode = 0;
     private void UpdateCurrentControlCode()
     {
         currentControlCode = 0;
@@ -126,7 +137,6 @@ public class TrackpadProSceneView : SceneView
     }
 
 
-    Vector2 mouseDelta = Vector2.zero;
     private void InputEvents()
     {
         if (!Event.current.isScrollWheel && !Event.current.isMouse)
@@ -191,7 +201,6 @@ public class TrackpadProSceneView : SceneView
     }
 
 
-    GameObject cameraDummyObject = null;
     private Transform CameraSpace
     {
         get
@@ -219,7 +228,6 @@ public class TrackpadProSceneView : SceneView
     }
 
 
-    private bool settingsOpened = false;
     private void SettingsGUI()
     {
         if (GUI.Button(settingsOpened ? new Rect(position.width / 2 - 15, 10, 30, 30) : new Rect(position.width - 40, 140, 30, 30), EditorGUIUtility.IconContent(!settingsOpened ? "d_Settings Icon" : "d_winbtn_win_close")))
