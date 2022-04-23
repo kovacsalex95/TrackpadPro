@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEditor;
 using System.Collections.Generic;
 
-[EditorWindowTitle(title = "Scene View (TPP)", useTypeNameAsIconName = false)]
+[EditorWindowTitle(icon = "d_ViewToolMove", title = "Scene TPP", useTypeNameAsIconName = false)]
 public class TrackpadProSceneView : SceneView
 {
 
@@ -228,30 +228,31 @@ public class TrackpadProSceneView : SceneView
         if (!settingsOpened)
             return;
 
-        float settingsWidth = Mathf.Min(400, position.width - 100);
-        float settingsHeight = Mathf.Min(460, position.height - 60);
+        float settingsWidth = Mathf.Min(300, position.width - 100);
+        float settingsHeight = Mathf.Min(500, position.height - 60);
         float settingsPadding = 20;
         float settingsSpacing = 20;
 
         Rect settingsPanel = new Rect(position.width / 2 - settingsWidth / 2, position.height / 2 - settingsHeight / 2, settingsWidth, settingsHeight);
+        Rect settingsInner = new Rect(settingsPanel.x + settingsPadding, settingsPanel.y + settingsPadding, settingsPanel.width - settingsPadding * 2, settingsPanel.height - settingsPadding * 2);
 
         GUI.Box(settingsPanel, ""); GUI.Box(settingsPanel, ""); GUI.Box(settingsPanel, "");
 
-        GUILayout.BeginArea(new Rect(settingsPanel.x + settingsPadding, settingsPanel.y + settingsPadding, settingsPanel.width - settingsPadding * 2, settingsPanel.height - settingsPadding * 2));
+        GUILayout.BeginArea(settingsInner);
 
         GUILayout.BeginVertical();
 
-        controlRotation = ControlGUISettings(controlRotation, "Rotate");
+        controlRotation = ControlGUISettings(controlRotation, "Rotate", settingsInner.width - 20);
         rotateSpeed = EditorGUILayout.FloatField("Rotate speed", rotateSpeed);
 
         GUILayout.Space(settingsSpacing);
 
-        controlPan = ControlGUISettings(controlPan, "Pan");
+        controlPan = ControlGUISettings(controlPan, "Pan", settingsInner.width - 20);
         panSpeed = EditorGUILayout.FloatField("Pan speed", panSpeed);
 
         GUILayout.Space(settingsSpacing);
 
-        controlZoom = ControlGUISettings(controlZoom, "Zoom");
+        controlZoom = ControlGUISettings(controlZoom, "Zoom", settingsInner.width - 20);
         zoomRatio = EditorGUILayout.Slider("Zoom speed", zoomRatio, 0.1f, 1f);
         zoomMin = EditorGUILayout.FloatField("Zoom min", zoomMin);
         zoomMax = EditorGUILayout.FloatField("Zoom max", zoomMax);
@@ -266,7 +267,7 @@ public class TrackpadProSceneView : SceneView
     }
 
 
-    private int ControlGUISettings(int original, string label)
+    private int ControlGUISettings(int original, string label, float width = 220)
     {
         int result = original;
 
@@ -316,21 +317,24 @@ public class TrackpadProSceneView : SceneView
             combination.Add("Command");
         combination.Add(mouseAxis == 0 ? "Cursor" : "Scroll");
 
-        GUILayout.Label(label.ToUpper());
-        GUILayout.Label("      " + string.Join(" + ", combination));
+        GUILayout.Label(label.ToUpper() + ": " + string.Join(" + ", combination));
 
         GUILayout.BeginHorizontal();
 
-        hasControl = ButtonCheckbox(hasControl, "Ctrl");
-        hasShift = ButtonCheckbox(hasShift, "Shift");
-        hasOption = ButtonCheckbox(hasOption, "Option");
-        hasCommand = ButtonCheckbox(hasCommand, "Command");
+        hasControl = ButtonCheckbox(hasControl, "Ctrl", width / 4);
+        hasShift = ButtonCheckbox(hasShift, "Shift", width / 4);
+        hasOption = ButtonCheckbox(hasOption, "Option", width / 4);
+        hasCommand = ButtonCheckbox(hasCommand, "Command", width / 4);
 
         GUILayout.EndHorizontal();
         GUILayout.BeginHorizontal();
 
+        if (!hasControl && !hasShift && !hasOption && !hasCommand)
+            mouseAxis = 1;
+        EditorGUI.BeginDisabledGroup(!hasControl && !hasShift && !hasOption && !hasCommand);
         if (GUILayout.Button(mouseAxis == 0 ? "Cursor movement" : "Scroll movement"))
             mouseAxis = mouseAxis == 0 ? 1 : 0;
+        EditorGUI.EndDisabledGroup();
 
         if (GUILayout.Button(invertX ? "-X" : "+X"))
             invertX = !invertX;
@@ -359,11 +363,19 @@ public class TrackpadProSceneView : SceneView
     }
 
 
-    private bool ButtonCheckbox(bool value, string label)
+    private bool ButtonCheckbox(bool value, string label, float width = 55)
     {
-        if (GUILayout.Button(string.Format("{0}{1}", value ? "[X] " : "", value ? label.ToUpper() : label.ToLower())))
-            return !value;
+        bool val = value;
 
-        return value;
+        GUILayout.BeginVertical();
+
+        GUILayout.Label(label, GUILayout.Width(width));
+
+        if (GUILayout.Button(EditorGUIUtility.IconContent(value ? "Button Icon" : "DotSelection"), GUILayout.Width(width), GUILayout.Height(30)))
+            val = !val;
+
+        GUILayout.EndVertical();
+
+        return val;
     }
 }
