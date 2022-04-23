@@ -33,6 +33,9 @@ public class TrackpadProSceneView : SceneView
     // Camera parameters
 
     [SerializeField]
+    float pointerMultiplier = 0.1f;
+
+    [SerializeField]
     float rotateSpeed = 5f;
 
     [SerializeField]
@@ -87,13 +90,49 @@ public class TrackpadProSceneView : SceneView
 
         if (Event.current.command)
             currentControlCode += BN_COMMAND;
+
+        if (Event.current.isScrollWheel)
+            currentControlCode += AXIS_SCROLL;
+        else if (Event.current.isMouse)
+            currentControlCode += AXIS_MOUSE;
     }
 
 
+    private int GetControlModifiers(int controlCode, out float invertX, out float invertY)
+    {
+        int result = controlCode;
+        invertX = 1;
+        invertY = 1;
+
+        if (result >= MOD_INV_Y)
+        {
+            invertY = -1;
+            result -= MOD_INV_Y;
+        }
+
+        if (result >= MOD_INV_X)
+        {
+            invertX = -1;
+            result -= MOD_INV_X;
+        }
+
+        return result;
+    }
+
+
+    private bool CurrentControls(int controlCode, out float invertX, out float invertY)
+    {
+        return GetControlModifiers(controlCode, out invertX, out invertY) == currentControlCode;
+    }
+
+
+    Vector2 mouseDelta = Vector2.zero;
     private void InputEvents()
     {
-        if (!Event.current.isScrollWheel)
+        if (!Event.current.isScrollWheel && !Event.current.isMouse)
             return;
+
+        mouseDelta = Event.current.delta * (Event.current.isScrollWheel ? 1f : pointerMultiplier);
 
         UpdateCurrentControlCode();
 
@@ -105,6 +144,7 @@ public class TrackpadProSceneView : SceneView
 
         // Prevent Unity to use the scroll event
         if (Event.current.type == EventType.ScrollWheel) Event.current.Use();
+        if (Event.current.type == EventType.MouseMove) Event.current.Use();
     }
 
 
@@ -113,11 +153,11 @@ public class TrackpadProSceneView : SceneView
         if (in2DMode)
             return;
 
-        if (currentControlCode != controlRotation)
+        if (!CurrentControls(controlRotation, out float invertX, out float invertY))
             return;
 
-        float rotateY = -Event.current.delta.x;
-        float rotateX = -Event.current.delta.y;
+        float rotateY = mouseDelta.x * invertX;
+        float rotateX = mouseDelta.y * invertY;
 
         Quaternion euler = Quaternion.Euler(rotation.eulerAngles + new Vector3(0, rotateY, 0) * rotateSpeed);
         rotation = euler * Quaternion.Euler(new Vector3(rotateX, 0, 0) * rotateSpeed);
@@ -126,7 +166,9 @@ public class TrackpadProSceneView : SceneView
 
     private void CameraMovement()
     {
-        if (currentControlCode != controlPan && !(in2DMode && currentControlCode == controlRotation))
+        float invertX, invertY;
+        if (!CurrentControls(controlPan, out invertX, out invertY) &&
+            !(in2DMode && CurrentControls(controlRotation, out invertX, out invertY)))
             return;
 
         float moveX = Event.current.delta.x * panSpeed;
@@ -138,10 +180,10 @@ public class TrackpadProSceneView : SceneView
 
     private void CameraZoom()
     {
-        if (currentControlCode != controlZoom)
+        if (!CurrentControls(controlZoom, out _, out float invertY))
             return;
 
-        float zoomDelta = Mathf.Clamp(Event.current.delta.y * zoomSpeed, -zoomMaxDelta, zoomMaxDelta) / zoomMaxDelta;
+        float zoomDelta = Mathf.Clamp(mouseDelta.y * zoomSpeed * invertY, -zoomMaxDelta, zoomMaxDelta) / zoomMaxDelta;
 
         float nextRatio = zoomDelta * zoomRatio + 1f;
 
