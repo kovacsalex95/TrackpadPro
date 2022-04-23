@@ -21,13 +21,13 @@ public class TrackpadProSceneView : SceneView
     // Mode controls
 
     [SerializeField]
-    int controlRotation = BN_NONE;
+    int controlRotation = AXIS_SCROLL + MOD_INV_X + MOD_INV_Y;
 
     [SerializeField]
-    int controlPan = BN_COMMAND;
+    int controlPan = BN_SHIFT + AXIS_SCROLL + MOD_INV_Y;
 
     [SerializeField]
-    int controlZoom = BN_OPTION;
+    int controlZoom = BN_COMMAND + AXIS_SCROLL;
 
 
     // Camera parameters
