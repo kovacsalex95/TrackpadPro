@@ -6,16 +6,16 @@ using System.Collections.Generic;
 public class TrackpadProSceneView : SceneView
 {
 
-    // Input button modifier constants
+    // Control input buttons, axes and modifiers
 
-    const int AXIS_MOUSE    =       0;
-    const int AXIS_SCROLL   =       1;
-    const int BN_COMMAND    =      10;
-    const int BN_OPTION     =     100;
-    const int BN_SHIFT      =    1000;
-    const int BN_CONTROL    =   10000;
-    const int MOD_INV_X     =  100000;
-    const int MOD_INV_Y     = 1000000;
+    const int AXIS_MOUSE    =    0;
+    const int AXIS_SCROLL   =    1;
+    const int BN_COMMAND    =   10;
+    const int BN_OPTION     = 10^2;
+    const int BN_SHIFT      = 10^3;
+    const int BN_CONTROL    = 10^4;
+    const int MOD_INV_X     = 10^5;
+    const int MOD_INV_Y     = 10^6;
 
 
     // Mode controls
