@@ -8,11 +8,14 @@ public class TrackpadProSceneView : SceneView
 
     // Input button modifier constants
 
-    const int BN_NONE       =     0;
-    const int BN_COMMAND    =    10;
-    const int BN_OPTION     =   100;
-    const int BN_SHIFT      =  1000;
-    const int BN_CONTROL    = 10000;
+    const int AXIS_MOUSE    =       0;
+    const int AXIS_SCROLL   =       1;
+    const int BN_COMMAND    =      10;
+    const int BN_OPTION     =     100;
+    const int BN_SHIFT      =    1000;
+    const int BN_CONTROL    =   10000;
+    const int MOD_INV_X     =  100000;
+    const int MOD_INV_Y     = 1000000;
 
 
     // Mode controls
