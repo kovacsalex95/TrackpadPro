@@ -64,7 +64,7 @@ public class TrackpadProSceneView : SceneView
 
         base.OnSceneGUI();
 
-        // TODO: Settings GUI
+        SettingsGUI();
     }
 
 
@@ -171,5 +171,95 @@ public class TrackpadProSceneView : SceneView
             DestroyImmediate(cameraDummyObject);
             cameraDummyObject = null;
         }
+    }
+
+
+    private bool settingsOpened = false;
+    private void SettingsGUI()
+    {
+        if (GUI.Button(new Rect(position.width - 40, 140, 30, 30), EditorGUIUtility.IconContent(!settingsOpened ? "d_Settings Icon" : "d_winbtn_win_close")))
+            settingsOpened = !settingsOpened;
+
+        if (!settingsOpened)
+            return;
+
+        Rect settingsPanel = new Rect(position.width - 310, 190, 300, 220);
+        GUI.Box(settingsPanel, "");
+        GUILayout.BeginArea(new Rect(settingsPanel.x + 10, settingsPanel.y + 10, settingsPanel.width - 20, settingsPanel.height - 20));
+
+        GUILayout.BeginVertical();
+
+        controlRotation = ControlGUISettings(controlRotation, "Rotate");
+
+        GUILayout.Space(10);
+
+        controlPan = ControlGUISettings(controlPan, "Pan");
+
+        GUILayout.Space(10);
+
+        controlZoom = ControlGUISettings(controlZoom, "Zoom");
+
+        GUILayout.EndVertical();
+        GUILayout.EndArea();
+    }
+
+
+    private int ControlGUISettings(int original, string label)
+    {
+        int result = 0;
+
+        char[] characters = original.ToString().ToCharArray();
+        char[] bits = new char[characters.Length];
+        for (int i = 0; i < characters.Length; i++)
+            bits[characters.Length - 1 - i] = characters[i];
+
+        bool hasControl = original >= BN_CONTROL && bits[4] == '1';
+        bool hasShift = original >= BN_SHIFT && bits[3] == '1';
+        bool hasOption = original >= BN_OPTION && bits[2] == '1';
+        bool hasCommand = original >= BN_COMMAND && bits[1] == '1';
+
+        List<string> combination = new List<string>();
+        if (hasControl)
+            combination.Add("Ctrl");
+        if (hasShift)
+            combination.Add("Shift");
+        if (hasOption)
+            combination.Add("Option");
+        if (hasCommand)
+            combination.Add("Command");
+        if (combination.Count == 0)
+            combination.Add("-");
+
+        GUILayout.Label(label.ToUpper());
+        GUILayout.Label("      " + string.Join(" + ", combination));
+
+        GUILayout.BeginHorizontal();
+
+        hasControl = ButtonCheckbox(hasControl, "Ctrl");
+        hasShift = ButtonCheckbox(hasShift, "Shift");
+        hasOption = ButtonCheckbox(hasOption, "Option");
+        hasCommand = ButtonCheckbox(hasCommand, "Command");
+
+        GUILayout.EndHorizontal();
+
+        if (hasControl)
+            result += BN_CONTROL;
+        if (hasShift)
+            result += BN_SHIFT;
+        if (hasOption)
+            result += BN_OPTION;
+        if (hasCommand)
+            result += BN_COMMAND;
+
+        return result;
+    }
+
+
+    private bool ButtonCheckbox(bool value, string label)
+    {
+        if (GUILayout.Button(string.Format("{0}{1}", value ? "[X] " : "", value ? label.ToUpper() : label.ToLower())))
+            return !value;
+
+        return value;
     }
 }
