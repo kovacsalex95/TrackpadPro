@@ -62,6 +62,10 @@ public class TrackpadProSceneView : SceneView
     [System.NonSerialized]
     int currentControlCode = 0;
     [System.NonSerialized]
+    float invertX = 1;
+    [System.NonSerialized]
+    float invertY = 1;
+    [System.NonSerialized]
     Vector2 mouseDelta = Vector2.zero;
     [System.NonSerialized]
     GameObject cameraDummyObject = null;
@@ -165,7 +169,7 @@ public class TrackpadProSceneView : SceneView
         if (in2DMode)
             return;
 
-        if (!CurrentControls(controlRotation, out float invertX, out float invertY))
+        if (!CurrentControls(controlRotation, out invertX, out invertY))
             return;
 
         float rotateY = mouseDelta.x * invertX;
@@ -178,7 +182,6 @@ public class TrackpadProSceneView : SceneView
 
     private void CameraMovement()
     {
-        float invertX, invertY;
         if (!CurrentControls(controlPan, out invertX, out invertY) &&
             !(in2DMode && CurrentControls(controlRotation, out invertX, out invertY)))
             return;
@@ -192,7 +195,7 @@ public class TrackpadProSceneView : SceneView
 
     private void CameraZoom()
     {
-        if (!CurrentControls(controlZoom, out _, out float invertY))
+        if (!CurrentControls(controlZoom, out _, out invertY))
             return;
 
         float zoomDelta = Mathf.Clamp(mouseDelta.y * zoomSpeed * invertY, -zoomMaxDelta, zoomMaxDelta) / zoomMaxDelta;
@@ -292,7 +295,7 @@ public class TrackpadProSceneView : SceneView
 
         GUILayout.Space(settingsSpacing);
 
-        controlZoom = ControlGUISettings(controlZoom, "Zoom", settingsInner.width - 20);
+        controlZoom = ControlGUISettings(controlZoom, "Zoom", settingsInner.width - 20, false, true);
         zoomRatio = EditorGUILayout.Slider("Zoom speed", zoomRatio, 0.1f, 1f);
         zoomMin = EditorGUILayout.FloatField("Zoom min", zoomMin);
         zoomMax = EditorGUILayout.FloatField("Zoom max", zoomMax);
