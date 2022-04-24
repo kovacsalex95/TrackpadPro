@@ -8,14 +8,14 @@ public class TrackpadProSceneView : SceneView
 
     // Control input buttons, axes and modifiers
 
-    const int AXIS_MOUSE    =    0;
-    const int AXIS_SCROLL   =    1;
-    const int BN_COMMAND    =   10;
-    const int BN_OPTION     = 10^2;
-    const int BN_SHIFT      = 10^3;
-    const int BN_CONTROL    = 10^4;
-    const int MOD_INV_X     = 10^5;
-    const int MOD_INV_Y     = 10^6;
+    const int AXIS_MOUSE    =        0;
+    const int AXIS_SCROLL   =        1;
+    const int BN_COMMAND    =      100;
+    const int BN_OPTION     =     1000;
+    const int BN_SHIFT      =    10000;
+    const int BN_CONTROL    =   100000;
+    const int MOD_INV_X     =  1000000;
+    const int MOD_INV_Y     = 10000000;
 
 
     // Mode controls
@@ -90,22 +90,16 @@ public class TrackpadProSceneView : SceneView
     {
         currentControlCode = 0;
 
-        if (Event.current.control)
-            currentControlCode += BN_CONTROL;
+        if (Event.current.control) currentControlCode += BN_CONTROL;
 
-        if (Event.current.shift)
-            currentControlCode += BN_SHIFT;
+        if (Event.current.shift) currentControlCode += BN_SHIFT;
 
-        if (Event.current.alt)
-            currentControlCode += BN_OPTION;
+        if (Event.current.alt) currentControlCode += BN_OPTION;
 
-        if (Event.current.command)
-            currentControlCode += BN_COMMAND;
+        if (Event.current.command) currentControlCode += BN_COMMAND;
 
-        if (Event.current.isScrollWheel)
-            currentControlCode += AXIS_SCROLL;
-        else if (Event.current.isMouse)
-            currentControlCode += AXIS_MOUSE;
+        if (Event.current.isScrollWheel) currentControlCode += AXIS_SCROLL;
+        else if (Event.current.isMouse) currentControlCode += AXIS_MOUSE;
     }
 
 
@@ -279,6 +273,7 @@ public class TrackpadProSceneView : SceneView
     {
         int result = original;
 
+
         bool invertY = false; bool invertX = false; bool hasControl = false; bool hasShift = false; bool hasOption = false; bool hasCommand = false;
 
         if (result >= MOD_INV_Y)
@@ -314,18 +309,17 @@ public class TrackpadProSceneView : SceneView
 
         int mouseAxis = result;
 
+
         List<string> combination = new List<string>();
-        if (hasControl)
-            combination.Add("Ctrl");
-        if (hasShift)
-            combination.Add("Shift");
-        if (hasOption)
-            combination.Add("Option");
-        if (hasCommand)
-            combination.Add("Command");
-        combination.Add(mouseAxis == 0 ? "Cursor" : "Scroll");
+        if (hasControl) combination.Add("Ctrl");
+        if (hasShift) combination.Add("Shift");
+        if (hasOption) combination.Add("Option");
+        if (hasCommand) combination.Add("Command");
+        combination.Add(mouseAxis == AXIS_MOUSE ? "Cursor" : "Scroll");
+
 
         GUILayout.Label(label.ToUpper() + ": " + string.Join(" + ", combination));
+
 
         GUILayout.BeginHorizontal();
 
@@ -333,38 +327,33 @@ public class TrackpadProSceneView : SceneView
         hasShift = ButtonCheckbox(hasShift, "Shift", width / 4);
         hasOption = ButtonCheckbox(hasOption, "Option", width / 4);
         hasCommand = ButtonCheckbox(hasCommand, "Command", width / 4);
+        bool forcedScroll = !hasControl && !hasShift && !hasOption && !hasCommand;
+        if (forcedScroll)
+            mouseAxis = AXIS_SCROLL;
 
         GUILayout.EndHorizontal();
+
+
         GUILayout.BeginHorizontal();
 
-        if (!hasControl && !hasShift && !hasOption && !hasCommand)
-            mouseAxis = 1;
-        EditorGUI.BeginDisabledGroup(!hasControl && !hasShift && !hasOption && !hasCommand);
-        if (GUILayout.Button(mouseAxis == 0 ? "Cursor movement" : "Scroll movement"))
-            mouseAxis = mouseAxis == 0 ? 1 : 0;
+        EditorGUI.BeginDisabledGroup(forcedScroll);
+        if (GUILayout.Button(mouseAxis == AXIS_MOUSE ? "Cursor movement" : "Scroll movement"))
+            mouseAxis = mouseAxis == AXIS_MOUSE ? AXIS_SCROLL : AXIS_MOUSE;
         EditorGUI.EndDisabledGroup();
 
-        if (GUILayout.Button(invertX ? "-X" : "+X"))
-            invertX = !invertX;
-        if (GUILayout.Button(invertY ? "-Y" : "+Y"))
-            invertY = !invertY;
+        if (GUILayout.Button(invertX ? "-X" : "+X")) invertX = !invertX;
+        if (GUILayout.Button(invertY ? "-Y" : "+Y")) invertY = !invertY;
 
         GUILayout.EndHorizontal();
 
-        result = 0;
 
-        if (invertY)
-            result += MOD_INV_Y;
-        if (invertX)
-            result += MOD_INV_X;
-        if (hasControl)
-            result += BN_CONTROL;
-        if (hasShift)
-            result += BN_SHIFT;
-        if (hasOption)
-            result += BN_OPTION;
-        if (hasCommand)
-            result += BN_COMMAND;
+        result = 0;
+        if (invertY) result += MOD_INV_Y;
+        if (invertX) result += MOD_INV_X;
+        if (hasControl) result += BN_CONTROL;
+        if (hasShift) result += BN_SHIFT;
+        if (hasOption) result += BN_OPTION;
+        if (hasCommand) result += BN_COMMAND;
         result += mouseAxis;
 
         return result;
@@ -373,17 +362,17 @@ public class TrackpadProSceneView : SceneView
 
     private bool ButtonCheckbox(bool value, string label, float width = 55)
     {
-        bool val = value;
+        bool result = value;
 
         GUILayout.BeginVertical();
 
         GUILayout.Label(label, GUILayout.Width(width));
 
-        if (GUILayout.Button(EditorGUIUtility.IconContent(value ? "Button Icon" : "DotSelection"), GUILayout.Width(width), GUILayout.Height(30)))
-            val = !val;
+        if (GUILayout.Button(EditorGUIUtility.IconContent(result ? "Button Icon" : "DotSelection"), GUILayout.Height(30)))
+            result = !result;
 
         GUILayout.EndVertical();
 
-        return val;
+        return result;
     }
 }
