@@ -310,7 +310,7 @@ public class TrackpadProSceneView : SceneView
     }
 
 
-    private int ControlGUISettings(int original, string label, float width = 220)
+    private int ControlGUISettings(int original, string label, float width = 220, bool x = true, bool y = true)
     {
         int result = original;
 
@@ -382,8 +382,8 @@ public class TrackpadProSceneView : SceneView
             mouseAxis = mouseAxis == AXIS_MOUSE ? AXIS_SCROLL : AXIS_MOUSE;
         EditorGUI.EndDisabledGroup();
 
-        if (GUILayout.Button(invertX ? "-X" : "+X")) invertX = !invertX;
-        if (GUILayout.Button(invertY ? "-Y" : "+Y")) invertY = !invertY;
+        if (x) if (GUILayout.Button(invertX ? "-X" : "+X")) invertX = !invertX;
+        if (y) if (GUILayout.Button(invertY ? "-Y" : "+Y")) invertY = !invertY;
 
         GUILayout.EndHorizontal();
 
