@@ -33,6 +33,9 @@ public class TrackpadProSceneView : SceneView
     // Camera parameters
 
     [SerializeField]
+    float globalCursorSpeed = 1f;
+
+    [SerializeField]
     float pointerMultiplier = 0.1f;
 
     [SerializeField]
@@ -148,7 +151,7 @@ public class TrackpadProSceneView : SceneView
         if (!Event.current.isScrollWheel && !Event.current.isMouse)
             return;
 
-        mouseDelta = Event.current.delta * (Event.current.isScrollWheel ? 1f : pointerMultiplier);
+        mouseDelta = Event.current.delta * (Event.current.isScrollWheel ? 1f : pointerMultiplier) * globalCursorSpeed;
 
         UpdateCurrentControlCode();
 
@@ -244,6 +247,7 @@ public class TrackpadProSceneView : SceneView
         if (PlayerPrefs.HasKey("TPP_zoomMin")) zoomMin = PlayerPrefs.GetFloat("TPP_zoomMin");
         if (PlayerPrefs.HasKey("TPP_zoomMax")) zoomMax = PlayerPrefs.GetFloat("TPP_zoomMax");
         if (PlayerPrefs.HasKey("TPP_pointerMultiplier")) pointerMultiplier = PlayerPrefs.GetFloat("TPP_pointerMultiplier");
+        if (PlayerPrefs.HasKey("TPP_globalCursorSpeed")) globalCursorSpeed = PlayerPrefs.GetFloat("TPP_globalCursorSpeed");
 
         settingsLoaded = true;
     }
@@ -260,6 +264,7 @@ public class TrackpadProSceneView : SceneView
         PlayerPrefs.SetFloat("TPP_zoomMin", zoomMin);
         PlayerPrefs.SetFloat("TPP_zoomMax", zoomMax);
         PlayerPrefs.SetFloat("TPP_pointerMultiplier", pointerMultiplier);
+        PlayerPrefs.SetFloat("TPP_globalCursorSpeed", globalCursorSpeed);
     }
 
 
@@ -272,7 +277,7 @@ public class TrackpadProSceneView : SceneView
             return;
 
         float settingsWidth = Mathf.Min(300, position.width - 100);
-        float settingsHeight = Mathf.Min(500, position.height - 60);
+        float settingsHeight = Mathf.Min(520, position.height - 60);
         float settingsPadding = 20;
         float settingsSpacing = 20;
 
@@ -284,6 +289,11 @@ public class TrackpadProSceneView : SceneView
         GUILayout.BeginArea(settingsInner);
 
         GUILayout.BeginVertical();
+
+        globalCursorSpeed = EditorGUILayout.FloatField("Global cursor speed", globalCursorSpeed);
+        pointerMultiplier = EditorGUILayout.FloatField("Cursor speed multiplier", pointerMultiplier);
+
+        GUILayout.Space(settingsSpacing);
 
         controlRotation = ControlGUISettings(controlRotation, "Rotate", settingsInner.width - 20);
         rotateSpeed = EditorGUILayout.FloatField("Rotate speed", rotateSpeed);
@@ -300,9 +310,6 @@ public class TrackpadProSceneView : SceneView
         zoomMin = EditorGUILayout.FloatField("Zoom min", zoomMin);
         zoomMax = EditorGUILayout.FloatField("Zoom max", zoomMax);
 
-        GUILayout.Space(settingsSpacing);
-
-        pointerMultiplier = EditorGUILayout.FloatField("Cursor speed multiplier", pointerMultiplier);
 
         GUILayout.EndVertical();
 
