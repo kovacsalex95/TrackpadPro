@@ -67,6 +67,8 @@ public class TrackpadProSceneView : SceneView
     GameObject cameraDummyObject = null;
     [System.NonSerialized]
     private bool settingsOpened = false;
+    [SerializeField]
+    private bool settingsLoaded = false;
 
 
     [MenuItem("Window/Scene View (TPP)")]
@@ -78,11 +80,17 @@ public class TrackpadProSceneView : SceneView
 
     protected override void OnSceneGUI()
     {
+        if (!settingsLoaded)
+            LoadSettings();
+
         InputEvents();
 
         base.OnSceneGUI();
 
         SettingsGUI();
+
+        if (settingsOpened)
+            SaveSettings();
     }
 
 
@@ -219,6 +227,36 @@ public class TrackpadProSceneView : SceneView
             DestroyImmediate(cameraDummyObject);
             cameraDummyObject = null;
         }
+    }
+
+
+    private void LoadSettings()
+    {
+        if (PlayerPrefs.HasKey("TPP_controlRotation")) controlRotation = PlayerPrefs.GetInt("TPP_controlRotation");
+        if (PlayerPrefs.HasKey("TPP_controlPan")) controlPan = PlayerPrefs.GetInt("TPP_controlPan");
+        if (PlayerPrefs.HasKey("TPP_controlZoom")) controlZoom = PlayerPrefs.GetInt("TPP_controlZoom");
+        if (PlayerPrefs.HasKey("TPP_rotateSpeed")) rotateSpeed = PlayerPrefs.GetFloat("TPP_rotateSpeed");
+        if (PlayerPrefs.HasKey("TPP_panSpeed")) panSpeed = PlayerPrefs.GetFloat("TPP_panSpeed");
+        if (PlayerPrefs.HasKey("TPP_zoomRatio")) zoomRatio = PlayerPrefs.GetFloat("TPP_zoomRatio");
+        if (PlayerPrefs.HasKey("TPP_zoomMin")) zoomMin = PlayerPrefs.GetFloat("TPP_zoomMin");
+        if (PlayerPrefs.HasKey("TPP_zoomMax")) zoomMax = PlayerPrefs.GetFloat("TPP_zoomMax");
+        if (PlayerPrefs.HasKey("TPP_pointerMultiplier")) pointerMultiplier = PlayerPrefs.GetFloat("TPP_pointerMultiplier");
+
+        settingsLoaded = true;
+    }
+
+
+    private void SaveSettings()
+    {
+        PlayerPrefs.SetInt("TPP_controlRotation", controlRotation);
+        PlayerPrefs.SetInt("TPP_controlPan", controlPan);
+        PlayerPrefs.SetInt("TPP_controlZoom", controlZoom);
+        PlayerPrefs.SetFloat("TPP_rotateSpeed", rotateSpeed);
+        PlayerPrefs.SetFloat("TPP_panSpeed", panSpeed);
+        PlayerPrefs.SetFloat("TPP_zoomRatio", zoomRatio);
+        PlayerPrefs.SetFloat("TPP_zoomMin", zoomMin);
+        PlayerPrefs.SetFloat("TPP_zoomMax", zoomMax);
+        PlayerPrefs.SetFloat("TPP_pointerMultiplier", pointerMultiplier);
     }
 
 
