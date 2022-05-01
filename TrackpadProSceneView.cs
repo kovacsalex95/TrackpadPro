@@ -2,14 +2,20 @@ using UnityEngine;
 using UnityEditor;
 using System.Collections.Generic;
 
+
 [EditorWindowTitle(icon = "d_ViewToolMove", title = "Scene TPP", useTypeNameAsIconName = false)]
 public class TrackpadProSceneView : SceneView
 {
 
     // Control input buttons, axes and modifiers
 
-    const int AXIS_MOUSE    =        0;
-    const int AXIS_SCROLL   =        1;
+    const int AXIS_MOUSE    =        1;
+    const int AXIS_SCROLL   =        2;
+    const int MB_LEFT       =       10;
+    const int MB_RIGHT      =       20;
+    const int MB_MIDDLE     =       30;
+    // TODO: Custom mouse buttons
+    const int MB_BOTH       =       90;
     const int BN_COMMAND    =      100;
     const int BN_OPTION     =     1000;
     const int BN_SHIFT      =    10000;
@@ -17,6 +23,14 @@ public class TrackpadProSceneView : SceneView
     const int MOD_INV_X     =  1000000;
     const int MOD_INV_Y     = 10000000;
 
+    protected enum MouseButtons
+    {
+        None = 0,
+        LeftMB = MB_LEFT,
+        RightMB = MB_RIGHT,
+        MiddleMB = MB_MIDDLE,
+        LeftRightMB = MB_BOTH
+    }
 
     // Mode controls
 
@@ -76,6 +90,10 @@ public class TrackpadProSceneView : SceneView
     private bool settingsOpened = false;
     [SerializeField]
     private bool settingsLoaded = false;
+    [System.NonSerialized]
+    private Dictionary<int, bool> mouseButtonStates = null;
+    [System.NonSerialized]
+    private bool onlyDefaults = false; // FOR DEBUG
 
 
     [MenuItem("Window/Scene View (TPP)")]
@@ -87,7 +105,7 @@ public class TrackpadProSceneView : SceneView
 
     protected override void OnSceneGUI()
     {
-        if (!settingsLoaded)
+        if (!settingsLoaded && !onlyDefaults)
             LoadSettings();
 
         InputEvents();
@@ -101,8 +119,39 @@ public class TrackpadProSceneView : SceneView
     }
 
 
+    private void UpdateMouseButtonStates()
+    {
+        if (mouseButtonStates == null)
+        {
+            mouseButtonStates = new Dictionary<int, bool>();
+            mouseButtonStates.Add(MB_LEFT, false);
+            mouseButtonStates.Add(MB_RIGHT, false);
+            mouseButtonStates.Add(MB_MIDDLE, false);
+            mouseButtonStates.Add(MB_BOTH, false);
+        }
+
+        if (!Event.current.isMouse)
+            return;
+
+        if (Event.current.type == EventType.MouseDown || Event.current.type == EventType.MouseUp)
+        {
+            int buttonCode = (Event.current.button + 1) * MB_LEFT;
+            if (buttonCode >= MB_BOTH)
+                return;
+
+            bool down = Event.current.type == EventType.MouseDown;
+
+            mouseButtonStates[buttonCode] = down;
+        }
+
+        mouseButtonStates[MB_BOTH] = mouseButtonStates[MB_LEFT] && mouseButtonStates[MB_RIGHT];
+    }
+
+
     private void UpdateCurrentControlCode()
     {
+        UpdateMouseButtonStates();
+
         currentControlCode = 0;
 
         if (Event.current.control) currentControlCode += BN_CONTROL;
@@ -112,6 +161,11 @@ public class TrackpadProSceneView : SceneView
         if (Event.current.alt) currentControlCode += BN_OPTION;
 
         if (Event.current.command) currentControlCode += BN_COMMAND;
+
+        if (mouseButtonStates[MB_BOTH]) currentControlCode += MB_BOTH;
+        else if (mouseButtonStates[MB_MIDDLE]) currentControlCode += MB_MIDDLE;
+        else if (mouseButtonStates[MB_RIGHT]) currentControlCode += MB_RIGHT;
+        else if (mouseButtonStates[MB_LEFT]) currentControlCode += MB_LEFT;
 
         if (Event.current.isScrollWheel) currentControlCode += AXIS_SCROLL;
         else if (Event.current.isMouse) currentControlCode += AXIS_MOUSE;
@@ -233,6 +287,12 @@ public class TrackpadProSceneView : SceneView
             DestroyImmediate(cameraDummyObject);
             cameraDummyObject = null;
         }
+
+        if (mouseButtonStates != null)
+        {
+            mouseButtonStates.Clear();
+            mouseButtonStates = null;
+        }
     }
 
 
@@ -321,8 +381,8 @@ public class TrackpadProSceneView : SceneView
     {
         int result = original;
 
-
         bool invertY = false; bool invertX = false; bool hasControl = false; bool hasShift = false; bool hasOption = false; bool hasCommand = false;
+        int mouseButton = 0;
 
         if (result >= MOD_INV_Y)
         {
@@ -355,6 +415,22 @@ public class TrackpadProSceneView : SceneView
             result -= BN_COMMAND;
         }
 
+        if (result >= MB_MIDDLE)
+        {
+            mouseButton = MB_MIDDLE;
+            result -= MB_MIDDLE;
+        }
+        else if (result >= MB_RIGHT)
+        {
+            mouseButton = MB_RIGHT;
+            result -= MB_RIGHT;
+        }
+        else if (result >= MB_LEFT)
+        {
+            mouseButton = MB_LEFT;
+            result -= MB_LEFT;
+        }
+
         int mouseAxis = result;
 
 
@@ -364,6 +440,7 @@ public class TrackpadProSceneView : SceneView
         if (hasOption) combination.Add("Option");
         if (hasCommand) combination.Add("Command");
         combination.Add(mouseAxis == AXIS_MOUSE ? "Cursor" : "Scroll");
+        if (mouseButton > 0) combination.Add(((MouseButtons)mouseButton).ToString());
 
 
         GUILayout.Label(label.ToUpper() + ": " + string.Join(" + ", combination));
@@ -375,7 +452,7 @@ public class TrackpadProSceneView : SceneView
         hasShift = ButtonCheckbox(hasShift, "Shift", width / 4);
         hasOption = ButtonCheckbox(hasOption, "Option", width / 4);
         hasCommand = ButtonCheckbox(hasCommand, "Command", width / 4);
-        bool forcedScroll = !hasControl && !hasShift && !hasOption && !hasCommand;
+        bool forcedScroll = !hasControl && !hasShift && !hasOption && !hasCommand && mouseButton == 0;
         if (forcedScroll)
             mouseAxis = AXIS_SCROLL;
 
@@ -383,6 +460,8 @@ public class TrackpadProSceneView : SceneView
 
 
         GUILayout.BeginHorizontal();
+
+        mouseButton = (int)(MouseButtons)EditorGUILayout.EnumPopup((MouseButtons)mouseButton);
 
         EditorGUI.BeginDisabledGroup(forcedScroll);
         if (GUILayout.Button(mouseAxis == AXIS_MOUSE ? "Cursor movement" : "Scroll movement"))
@@ -402,6 +481,7 @@ public class TrackpadProSceneView : SceneView
         if (hasShift) result += BN_SHIFT;
         if (hasOption) result += BN_OPTION;
         if (hasCommand) result += BN_COMMAND;
+        result += mouseButton;
         result += mouseAxis;
 
         return result;
