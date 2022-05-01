@@ -1,7 +1,7 @@
+#if UNITY_EDITOR
 using UnityEngine;
 using UnityEditor;
 using System.Collections.Generic;
-
 
 [EditorWindowTitle(icon = "d_ViewToolMove", title = "Scene TPP", useTypeNameAsIconName = false)]
 public class TrackpadProSceneView : SceneView
@@ -504,3 +504,4 @@ public class TrackpadProSceneView : SceneView
         return result;
     }
 }
+#endif
