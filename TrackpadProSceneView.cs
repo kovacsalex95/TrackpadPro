@@ -1,4 +1,11 @@
 #if UNITY_EDITOR
+
+/**
+ * TrackpadPro Custom Scene View
+ * 
+ * Created by Alex Kovács (https://lxkvcs.hu)
+ */
+
 using UnityEngine;
 using UnityEditor;
 using System.Collections.Generic;
